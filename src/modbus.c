@@ -1056,11 +1056,14 @@ static int read_io_status(modbus_t *ctx, int function,
         int offset;
         int offset_end;
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
         if (rc == -1)
             return -1;
 
