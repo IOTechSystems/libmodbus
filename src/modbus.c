@@ -1056,11 +1056,14 @@ static int read_io_status(modbus_t *ctx, int function,
         int offset;
         int offset_end;
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
         if (rc == -1)
             return -1;
 
@@ -1165,11 +1168,15 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb,
         int offset;
         int i;
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
+
         if (rc == -1)
             return -1;
 
@@ -1256,11 +1263,14 @@ static int write_single(modbus_t *ctx, int function, int addr, const uint16_t va
         /* Used by write_bit and write_register */
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
     }
 
     return rc;
@@ -1341,13 +1351,15 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
     if (rc > 0) {
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
     }
-
 
     return rc;
 }
@@ -1391,11 +1403,14 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
     if (rc > 0) {
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
     }
 
     return rc;
@@ -1427,11 +1442,14 @@ int modbus_mask_write_register(modbus_t *ctx, int addr, uint16_t and_mask, uint1
         /* Used by write_bit and write_register */
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
     }
 
     return rc;
@@ -1541,11 +1559,15 @@ int modbus_report_slave_id(modbus_t *ctx, int max_dest, uint8_t *dest)
         int offset;
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
-        rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
-        if (rc == -1)
-            return -1;
+        do
+        {
+            rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
+            if (rc == -1)
+                return -1;
 
-        rc = check_confirmation(ctx, req, rsp, rc);
+            rc = check_confirmation(ctx, req, rsp, rc);
+        } while (rc == -1 && errno == EMBBADDATA);
+
         if (rc == -1)
             return -1;
 
