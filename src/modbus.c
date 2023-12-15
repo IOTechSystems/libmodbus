@@ -99,12 +99,14 @@ static void _sleep_response_timeout(modbus_t *ctx)
           (ctx->response_timeout.tv_usec / 1000));
 #else
     /* usleep source code */
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     struct timespec request, remaining;
     request.tv_sec = ctx->response_timeout.tv_sec;
     request.tv_nsec = ((long int)ctx->response_timeout.tv_usec) * 1000;
     while (nanosleep(&request, &remaining) == -1 && errno == EINTR) {
         request = remaining;
     }
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 #endif
 }
 
@@ -168,6 +170,7 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
     int rc;
     int i;
 
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     msg_length = ctx->backend->send_msg_pre(msg, msg_length);
 
     if (ctx->debug) {
@@ -201,9 +204,11 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
 
     if (rc > 0 && rc != msg_length) {
         errno = EMBBADDATA;
+        fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         return -1;
     }
 
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return rc;
 }
 
@@ -347,6 +352,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
     int msg_length = 0;
     _step_t step;
 
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     if (ctx->debug) {
         if (msg_type == MSG_INDICATION) {
             printf("Waiting for an indication...\n");
@@ -362,6 +368,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
     /* We need to analyse the message step by step.  At the first step, we want
      * to reach the function code because all packets contain this
      * information. */
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     step = _STEP_FUNCTION;
     length_to_read = ctx->backend->header_length + 1;
 
@@ -383,6 +390,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
         p_tv = &tv;
     }
 
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     while (length_to_read != 0) {
         rc = ctx->backend->select(ctx, &rset, p_tv, length_to_read);
         if (rc == -1) {
@@ -399,16 +407,19 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
                 }
                 errno = saved_errno;
             }
+            fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
 
         rc = ctx->backend->recv(ctx, msg + msg_length, length_to_read);
         if (rc == 0) {
+            fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             errno = ECONNRESET;
             rc = -1;
         }
 
         if (rc == -1) {
+            fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             _error_print(ctx, "read");
             if ((ctx->error_recovery & MODBUS_ERROR_RECOVERY_LINK) &&
                 (errno == ECONNRESET || errno == ECONNREFUSED ||
@@ -476,6 +487,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
     if (ctx->debug)
         printf("\n");
 
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return ctx->backend->check_integrity(ctx, msg, msg_length);
 }
 

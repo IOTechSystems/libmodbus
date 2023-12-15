@@ -177,6 +177,7 @@ static int _modbus_tcp_receive(modbus_t *ctx, uint8_t *req) {
 }
 
 static ssize_t _modbus_tcp_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length) {
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return recv(ctx->s, (char *)rsp, rsp_length, 0);
 }
 
@@ -727,15 +728,18 @@ static int _modbus_tcp_select(modbus_t *ctx, fd_set *rset, struct timeval *tv, i
             FD_ZERO(rset);
             FD_SET(ctx->s, rset);
         } else {
+            fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
     }
 
     if (s_rc == 0) {
+        fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         errno = ETIMEDOUT;
         return -1;
     }
 
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return s_rc;
 }
 
