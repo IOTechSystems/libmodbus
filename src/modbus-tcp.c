@@ -262,11 +262,13 @@ static int _modbus_tcp_set_ipv4_options(int s)
 static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
                     const struct timeval *ro_tv)
 {
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     int rc = connect(sockfd, addr, addrlen);
 
 #ifdef OS_WIN32
     int wsaError = 0;
     if (rc == -1) {
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         wsaError = WSAGetLastError();
     }
 
@@ -278,6 +280,7 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
         int optval;
         socklen_t optlen = sizeof(optval);
         struct timeval tv = *ro_tv;
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 
         /* Wait to be available in writing */
         FD_ZERO(&wset);
@@ -285,6 +288,7 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
         rc = select(sockfd + 1, NULL, &wset, NULL, &tv);
         if (rc <= 0) {
             /* Timeout or fail */
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
 
@@ -294,6 +298,7 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
             return 0;
         } else {
             errno = ECONNREFUSED;
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
     }
