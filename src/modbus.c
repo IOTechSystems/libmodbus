@@ -1597,6 +1597,7 @@ int modbus_report_slave_id(modbus_t *ctx, int max_dest, uint8_t *dest)
 
 void _modbus_init_common(modbus_t *ctx)
 {
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     /* Slave and socket are initialized to -1 */
     ctx->slave = -1;
     ctx->s = -1;
@@ -1759,6 +1760,7 @@ int modbus_get_header_length(modbus_t *ctx)
 
 int modbus_connect(modbus_t *ctx)
 {
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     if (ctx == NULL) {
         errno = EINVAL;
         return -1;
@@ -1769,6 +1771,7 @@ int modbus_connect(modbus_t *ctx)
 
 void modbus_close(modbus_t *ctx)
 {
+    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     if (ctx == NULL)
         return;
 
