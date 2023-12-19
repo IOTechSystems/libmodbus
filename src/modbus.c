@@ -406,6 +406,11 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
                     modbus_connect(ctx);
                 }
                 errno = saved_errno;
+            } else {
+                fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
+                _sleep_response_timeout(ctx);
+                modbus_close(ctx);
+                modbus_connect(ctx);
             }
             fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
