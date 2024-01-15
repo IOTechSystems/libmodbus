@@ -182,18 +182,24 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
     /* In recovery mode, the write command will be issued until to be
        successful! Disabled by default. */
     do {
+        fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         rc = ctx->backend->send(ctx, msg, msg_length);
         if (rc == -1) {
+            fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             _error_print(ctx, NULL);
             if (ctx->error_recovery & MODBUS_ERROR_RECOVERY_LINK) {
                 int saved_errno = errno;
 
                 if ((errno == EBADF || errno == ECONNRESET || errno == EPIPE)) {
+                    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
                     modbus_close(ctx);
                     _sleep_response_timeout(ctx);
                     modbus_connect(ctx);
+                    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
                 } else {
+                    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
                     _sleep_response_timeout(ctx);
+                    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
                     modbus_flush(ctx);
                 }
                 errno = saved_errno;
