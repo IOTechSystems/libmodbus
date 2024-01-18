@@ -177,7 +177,6 @@ static int _modbus_tcp_receive(modbus_t *ctx, uint8_t *req) {
 }
 
 static ssize_t _modbus_tcp_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length) {
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return recv(ctx->s, (char *)rsp, rsp_length, 0);
 }
 
@@ -262,13 +261,11 @@ static int _modbus_tcp_set_ipv4_options(int s)
 static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
                     const struct timeval *ro_tv)
 {
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     int rc = connect(sockfd, addr, addrlen);
 
 #ifdef OS_WIN32
     int wsaError = 0;
     if (rc == -1) {
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         wsaError = WSAGetLastError();
     }
 
@@ -280,7 +277,6 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
         int optval;
         socklen_t optlen = sizeof(optval);
         struct timeval tv = *ro_tv;
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 
         /* Wait to be available in writing */
         FD_ZERO(&wset);
@@ -288,7 +284,6 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
         rc = select(sockfd + 1, NULL, &wset, NULL, &tv);
         if (rc <= 0) {
             /* Timeout or fail */
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
 
@@ -298,7 +293,6 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
             return 0;
         } else {
             errno = ECONNREFUSED;
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
     }
@@ -313,7 +307,6 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     struct sockaddr_in addr;
     modbus_tcp_t *ctx_tcp = ctx->backend_data;
     int flags = SOCK_STREAM;
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {
@@ -734,18 +727,15 @@ static int _modbus_tcp_select(modbus_t *ctx, fd_set *rset, struct timeval *tv, i
             FD_ZERO(rset);
             FD_SET(ctx->s, rset);
         } else {
-            fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
             return -1;
         }
     }
 
     if (s_rc == 0) {
-        fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         errno = ETIMEDOUT;
         return -1;
     }
 
-    fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return s_rc;
 }
 
