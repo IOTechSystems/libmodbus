@@ -155,6 +155,9 @@ static unsigned int compute_response_length_from_request(modbus_t *ctx, uint8_t 
     case MODBUS_FC_MASK_WRITE_REGISTER:
         length = 7;
         break;
+    case MODBUS_FC_READ_DEVICE_ID:
+        length = MSG_LENGTH_UNDEFINED;
+        break;
     default:
         length = 5;
     }
@@ -264,6 +267,8 @@ static uint8_t compute_meta_length_after_function(int function,
             length = 6;
         } else if (function == MODBUS_FC_WRITE_AND_READ_REGISTERS) {
             length = 9;
+        } else if (function == MODBUS_FC_READ_DEVICE_ID) {
+            length = 3;
         } else {
             /* MODBUS_FC_READ_EXCEPTION_STATUS, MODBUS_FC_REPORT_SLAVE_ID */
             length = 0;
@@ -278,6 +283,7 @@ static uint8_t compute_meta_length_after_function(int function,
             length = 4;
             break;
         case MODBUS_FC_MASK_WRITE_REGISTER:
+        case MODBUS_FC_READ_DEVICE_ID:
             length = 6;
             break;
         default:
