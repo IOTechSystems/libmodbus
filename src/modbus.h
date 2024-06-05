@@ -76,14 +76,20 @@ MODBUS_BEGIN_DECLS
 #define MODBUS_MEI_CANOPEN   0x0D
 #define MODBUS_MEI_DEVICE_ID 0x0E
 
-/* Device identification object codes */
-#define MODBUS_OID_VENDOR_NAME 0x00
-#define MODBUS_OID_PRODUCT_CODE 0x01
+/* Device identification object ids */
+#define MODBUS_OID_VENDOR_NAME          0x00
+#define MODBUS_OID_PRODUCT_CODE         0x01
 #define MODBUS_OID_MAJOR_MINOR_REVISION 0x02
-#define MODBUS_OID_VENDOR_URL 0x03
-#define MODBUS_OID_PRODUCT_NAME 0x04
-#define MODBUS_OID_MODEL_NAME 0x05
-#define MODBUS_OID_USER_APP_NAME 0x06
+#define MODBUS_OID_VENDOR_URL           0x03
+#define MODBUS_OID_PRODUCT_NAME         0x04
+#define MODBUS_OID_MODEL_NAME           0x05
+#define MODBUS_OID_USER_APP_NAME        0x06
+
+/* Device identification object codes */
+#define MODBUS_OID_CODE_BASIC    0x01
+#define MODBUS_OID_CODE_REGULAR  0x02
+#define MODBUS_OID_CODE_EXTENDED 0x03
+#define MODBUS_OID_CODE_SPECIFIC 0x04
 
 #define MODBUS_BROADCAST_ADDRESS    0
 
