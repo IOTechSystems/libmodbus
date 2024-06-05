@@ -155,6 +155,9 @@ static unsigned int compute_response_length_from_request(modbus_t *ctx, uint8_t 
     case MODBUS_FC_MASK_WRITE_REGISTER:
         length = 7;
         break;
+    case MODBUS_FC_READ_DEVICE_ID:
+        length = MSG_LENGTH_UNDEFINED;
+        break;
     default:
         length = 5;
     }
@@ -264,6 +267,8 @@ static uint8_t compute_meta_length_after_function(int function,
             length = 6;
         } else if (function == MODBUS_FC_WRITE_AND_READ_REGISTERS) {
             length = 9;
+        } else if (function == MODBUS_FC_READ_DEVICE_ID) {
+            length = 3;
         } else {
             /* MODBUS_FC_READ_EXCEPTION_STATUS, MODBUS_FC_REPORT_SLAVE_ID */
             length = 0;
@@ -278,6 +283,7 @@ static uint8_t compute_meta_length_after_function(int function,
             length = 4;
             break;
         case MODBUS_FC_MASK_WRITE_REGISTER:
+        case MODBUS_FC_READ_DEVICE_ID:
             length = 6;
             break;
         default:
@@ -290,7 +296,7 @@ static uint8_t compute_meta_length_after_function(int function,
 
 /* Computes the length to read after the meta information (address, count, etc) */
 static int compute_data_length_after_meta(modbus_t *ctx, uint8_t *msg,
-                                          msg_type_t msg_type)
+                                          msg_type_t msg_type, unsigned * objects_to_read)
 {
     int function = msg[ctx->backend->header_length];
     int length;
@@ -313,6 +319,13 @@ static int compute_data_length_after_meta(modbus_t *ctx, uint8_t *msg,
             function == MODBUS_FC_REPORT_SLAVE_ID ||
             function == MODBUS_FC_WRITE_AND_READ_REGISTERS) {
             length = msg[ctx->backend->header_length + 1];
+        } else if ((function == MODBUS_FC_READ_DEVICE_ID) && (msg[ctx->backend->header_length + 1] == MODBUS_MEI_DEVICE_ID)) {
+            *objects_to_read = msg[ctx->backend->header_length + 6];
+            if (*objects_to_read) {
+                return 2;
+            } else {
+                length = 0;
+            }
         } else {
             length = 0;
         }
@@ -345,6 +358,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
     struct timeval *p_tv;
     int length_to_read;
     int msg_length = 0;
+    unsigned objects_to_read = 0;
     _step_t step;
 
     if (ctx->debug) {
@@ -448,13 +462,28 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
                 } /* else switches straight to the next step */
             case _STEP_META:
                 length_to_read = compute_data_length_after_meta(
-                    ctx, msg, msg_type);
+                    ctx, msg, msg_type, &objects_to_read);
                 if ((msg_length + length_to_read) > (int)ctx->backend->max_adu_length) {
                     errno = EMBBADDATA;
                     _error_print(ctx, "too many data");
                     return -1;
                 }
                 step = _STEP_DATA;
+                break;
+            case _STEP_DATA:
+                if (objects_to_read) {
+                    length_to_read = msg[msg_length - 1];
+                    if (--objects_to_read) {
+                        length_to_read += 2;
+                    } else {
+                        length_to_read += ctx->backend->checksum_length;
+                    }
+                    if ((msg_length + length_to_read) > (int)ctx->backend->max_adu_length) {
+                        errno = EMBBADDATA;
+                        _error_print(ctx, "too many data");
+                        return -1;
+                    }
+                }
                 break;
             default:
                 break;
