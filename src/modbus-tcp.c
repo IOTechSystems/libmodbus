@@ -338,6 +338,7 @@ static int _connect(int sockfd,
 static int _modbus_tcp_connect(modbus_t *ctx)
 {
     int rc;
+    int s;
     /* Specialized version of sockaddr for Internet socket address (same size) */
     struct sockaddr_in addr;
     modbus_tcp_t *ctx_tcp = ctx->backend_data;
@@ -357,29 +358,27 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     flags |= SOCK_NONBLOCK;
 #endif
 
-    ctx->s = socket(PF_INET, flags, 0);
-    if (ctx->s < 0) {
+    s = socket(PF_INET, flags, 0);
+    if (s < 0) {
         return -1;
     }
 
-    if (ctx->s >= FD_SETSIZE) {
+    if (s >= FD_SETSIZE) {
         if (ctx->debug) {
             fprintf(
                 stderr,
                 "ERROR Socket descriptor %d exceeds FD_SETSIZE (%d)\n",
-                ctx->s,
+                s,
                 FD_SETSIZE);
         }
-        close(ctx->s);
-        ctx->s = -1;
+        close(s);
         errno = EINVAL;
         return -1;
     }
 
-    rc = _modbus_tcp_set_ipv4_options(ctx->s);
+    rc = _modbus_tcp_set_ipv4_options(s);
     if (rc == -1) {
-        close(ctx->s);
-        ctx->s = -1;
+        close(s);
         return -1;
     }
 
@@ -394,18 +393,21 @@ static int _modbus_tcp_connect(modbus_t *ctx)
         if (ctx->debug) {
             fprintf(stderr, "Invalid IP address: %s\n", ctx_tcp->ip);
         }
-        close(ctx->s);
-        ctx->s = -1;
+        close(s);
         return -1;
     }
 
-    rc =
-        _connect(ctx->s, (struct sockaddr *) &addr, sizeof(addr), &ctx->response_timeout);
+    rc = _connect(s, (struct sockaddr *) &addr, sizeof(addr), &ctx->response_timeout);
     if (rc == -1) {
-        close(ctx->s);
-        ctx->s = -1;
+        close(s);
         return -1;
     }
+
+    /* Replace any previously open socket */
+    if (ctx->s >= 0) {
+        close(ctx->s);
+    }
+    ctx->s = s;
 
     return 0;
 }
@@ -414,6 +416,7 @@ static int _modbus_tcp_connect(modbus_t *ctx)
 static int _modbus_tcp_pi_connect(modbus_t *ctx)
 {
     int rc;
+    int new_s = -1;
     struct addrinfo *ai_list;
     struct addrinfo *ai_ptr;
     struct addrinfo ai_hints;
@@ -445,7 +448,9 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
             fprintf(stderr, "Error returned by getaddrinfo: %d\n", rc);
 #endif
         }
-        freeaddrinfo(ai_list);
+        if (ai_list != NULL) {
+            freeaddrinfo(ai_list);
+        }
         errno = ECONNREFUSED;
         return -1;
     }
@@ -491,15 +496,21 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
             continue;
         }
 
-        ctx->s = s;
+        new_s = s;
         break;
     }
 
     freeaddrinfo(ai_list);
 
-    if (ctx->s < 0) {
+    if (new_s < 0) {
         return -1;
     }
+
+    /* Replace any previously open socket */
+    if (ctx->s >= 0) {
+        close(ctx->s);
+    }
+    ctx->s = new_s;
 
     return 0;
 }
@@ -560,7 +571,6 @@ static int _modbus_tcp_flush(modbus_t *ctx)
                 rc_sum += rc;
             } else {
                 // Handle overflow
-                ctx->error_recovery = MODBUS_ERROR_RECOVERY_PROTOCOL;
                 errno = EOVERFLOW;
                 return -1;
             }
@@ -979,7 +989,9 @@ modbus_t *modbus_new_tcp(const char *ip, int port)
        handler for SIGPIPE. */
     struct sigaction sa;
 
+    memset(&sa, 0, sizeof(sa));
     sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
     if (sigaction(SIGPIPE, &sa, NULL) < 0) {
         /* The debug flag can't be set here... */
         fprintf(stderr, "Could not install SIGPIPE handler.\n");
@@ -1024,6 +1036,7 @@ modbus_t *modbus_new_tcp(const char *ip, int port)
         }
     } else {
         ctx_tcp->ip[0] = '0';
+        ctx_tcp->ip[1] = '\0';
     }
     ctx_tcp->port = port;
     ctx_tcp->t_id = 0;
