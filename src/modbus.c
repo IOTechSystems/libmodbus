@@ -322,7 +322,8 @@ static uint8_t compute_meta_length_after_function(int function, msg_type_t msg_t
 }
 
 /* Computes the length to read after the meta information (address, count, etc) */
-static int compute_data_length_after_meta(modbus_t *ctx, uint8_t *msg,
+static int
+compute_data_length_after_meta(modbus_t *ctx, uint8_t *msg,
                                           msg_type_t msg_type, unsigned * objects_to_read)
 {
     int function = msg[ctx->backend->header_length];
@@ -531,7 +532,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
             case _STEP_META:
                 length_to_read = compute_data_length_after_meta(
                     ctx, msg, msg_type, &objects_to_read);
-                if ((msg_length + length_to_read) > (int)ctx->backend->max_adu_length) {
+                if ((msg_length + length_to_read) > ctx->backend->max_adu_length) {
                     errno = EMBBADDATA;
                     _error_print(ctx, "too many data");
                     return -1;
@@ -546,7 +547,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
                     } else {
                         length_to_read += ctx->backend->checksum_length;
                     }
-                    if ((msg_length + length_to_read) > (int)ctx->backend->max_adu_length) {
+                    if ((msg_length + length_to_read) > ctx->backend->max_adu_length) {
                         errno = EMBBADDATA;
                         _error_print(ctx, "too many data");
                         return -1;
@@ -844,6 +845,7 @@ int modbus_reply(modbus_t *ctx,
     sft_t sft;
     uint8_t meta_length;
     int data_length;
+    unsigned objects_to_read = 0;
 
     if (ctx == NULL || req == NULL || mb_mapping == NULL) {
         errno = EINVAL;
@@ -886,7 +888,7 @@ int modbus_reply(modbus_t *ctx,
     if (req_length >= (int) (offset + 1 + meta_length)) {
         /* The meta fields (including the byte count) are present, so the
            declared data length can be read safely. */
-        data_length = compute_data_length_after_meta(ctx, (uint8_t *) req, MSG_INDICATION);
+        data_length = compute_data_length_after_meta(ctx, (uint8_t *) req, MSG_INDICATION, &objects_to_read);
     }
     if (req_length < (int) (offset + 1 + meta_length + data_length)) {
         rsp_length = response_exception(ctx,
