@@ -14,6 +14,13 @@
 #endif
 #if defined(HAVE_STRUCT_TERMIOS2)
 #include <sys/ioctl.h>
+#ifndef TCSETS2
+#define termios asmtermios
+#define winsize asmwinsize
+#include <asm/termios.h>
+#undef termios
+#undef winsize
+#endif
 #endif
 #include "modbus-private.h"
 #include <assert.h>
